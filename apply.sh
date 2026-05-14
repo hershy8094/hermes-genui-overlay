@@ -74,7 +74,8 @@ if [ -f "$SCRIPT_DIR/desktop/styles/genui.css" ]; then
     # Inject CSS import into main.css if not already present
     MAIN_CSS="$DESKTOP_DIR/src/renderer/src/assets/main.css"
     if [ -f "$MAIN_CSS" ] && ! grep -q "genui.css" "$MAIN_CSS"; then
-        echo '@import "./genui.css";  /* [GENUI-OVERLAY] */' >> "$MAIN_CSS"
+        # @import must precede all other statements — prepend, don't append
+        sed -i '' '1s/^/@import ".\/genui.css";  \/* [GENUI-OVERLAY] *\/\'$'\n/' "$MAIN_CSS"
         echo "✓ Injected genui.css import into main.css"
     fi
 else

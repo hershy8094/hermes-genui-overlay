@@ -140,18 +140,17 @@ def patch_preload_ts():
     target = DESKTOP_DIR / "src" / "preload" / "index.ts"
     patcher = FilePatcher(target)
 
-    # Insert onGenUIRender after onChatUsage
-    patcher.insert_after(
-        anchor='return () => ipcRenderer.removeListener("chat-usage", handler);',
+    # Insert onGenUIRender before onChatError (as a sibling property)
+    patcher.insert_before(
+        anchor='onChatError: (callback: (error: string) => void)',
         insertion=(
-            '\n'
             '  // [GENUI-OVERLAY] GenUI render events\n'
             '  onGenUIRender: (callback: (payload: unknown) => void): (() => void) => {\n'
             '    const handler = (_event: Electron.IpcRendererEvent, payload: unknown): void =>\n'
             '      callback(payload);\n'
             '    ipcRenderer.on("chat-genui-render", handler);\n'
             '    return () => ipcRenderer.removeListener("chat-genui-render", handler);\n'
-            '  },\n'
+            '  },\n\n'
         ),
         name="Add onGenUIRender bridge",
         marker="[GENUI-OVERLAY] GenUI render events",
