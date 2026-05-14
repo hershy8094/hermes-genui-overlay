@@ -55,9 +55,7 @@ def apply():
             marker="[GENUI-OVERLAY] Parse X-Hermes-Platform header",
         )
 
-        # 3. Thread platform into _run_agent calls (streaming path)
-        #    Insert platform_override=genui_platform after gateway_session_key
-        #    in the streaming _run_agent call
+        # 3. Thread platform into the _run_agent call site (streaming endpoint)
         patcher.insert_after(
             anchor='tool_complete_callback=_on_tool_complete,',
             insertion=(
@@ -69,17 +67,26 @@ def apply():
         )
 
         # 4. Add platform_override param to _run_agent method signature
-        patcher.insert_after(
-            anchor='gateway_session_key: Optional[str] = None,',
-            insertion=(
+        #    Use multi-line pattern including agent_ref for uniqueness
+        patcher.replace_pattern(
+            pattern=(
+                r'(agent_ref: Optional\[list\] = None,\n'
+                r'\s*gateway_session_key: Optional\[str\] = None,\n'
+                r'\s*\) -> tuple:)'
+            ),
+            replacement=(
+                'agent_ref: Optional[list] = None,\n'
+                '        gateway_session_key: Optional[str] = None,\n'
                 '        # [GENUI-OVERLAY] Platform override from X-Hermes-Platform header\n'
                 '        platform_override: Optional[str] = None,\n'
+                '    ) -> tuple:'
             ),
             name="Add platform_override to _run_agent",
             marker="[GENUI-OVERLAY] Platform override from X-Hermes-Platform header",
         )
 
-        # 5. Override the hardcoded platform="api_server" with the dynamic value
+        # 5. Forward platform_override from _run_agent._run() to _create_agent
+        #    and override the hardcoded platform="api_server" in _create_agent
         patcher.replace_pattern(
             pattern=r'platform="api_server"',
             replacement='platform=platform_override or "api_server",  # [GENUI-OVERLAY] dynamic platform',
@@ -87,7 +94,37 @@ def apply():
             marker="[GENUI-OVERLAY] dynamic platform",
         )
 
-        # 6. Patch the _emit helper to detect genui blocks
+        # 6. Forward platform_override in the _create_agent() call inside _run()
+        patcher.replace_pattern(
+            pattern=(
+                r'(agent = self\._create_agent\(\n'
+                r'(\s*)ephemeral_system_prompt=ephemeral_system_prompt,\n'
+                r'\s*session_id=session_id,\n'
+                r'\s*stream_delta_callback=stream_delta_callback,\n'
+                r'\s*tool_progress_callback=tool_progress_callback,\n'
+                r'\s*tool_start_callback=tool_start_callback,\n'
+                r'\s*tool_complete_callback=tool_complete_callback,\n'
+                r'\s*gateway_session_key=gateway_session_key,\n'
+                r'\s*\))'
+            ),
+            replacement=(
+                'agent = self._create_agent(\n'
+                '                ephemeral_system_prompt=ephemeral_system_prompt,\n'
+                '                session_id=session_id,\n'
+                '                stream_delta_callback=stream_delta_callback,\n'
+                '                tool_progress_callback=tool_progress_callback,\n'
+                '                tool_start_callback=tool_start_callback,\n'
+                '                tool_complete_callback=tool_complete_callback,\n'
+                '                gateway_session_key=gateway_session_key,\n'
+                '                # [GENUI-OVERLAY] Forward platform override\n'
+                '                platform_override=platform_override,\n'
+                '            )'
+            ),
+            name="Forward platform_override to _create_agent",
+            marker="[GENUI-OVERLAY] Forward platform override",
+        )
+
+        # 7. Patch the _emit helper to detect genui blocks
         #    We insert a genui buffer check BEFORE the existing content emission
         patcher.insert_before(
             anchor='if isinstance(item, tuple) and len(item) == 2 and item[0] == "__tool_progress__"',
