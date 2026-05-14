@@ -1,0 +1,298 @@
+/* ═══════════════════════════════════════════════════════════════
+ * GenUI Widget Styles — hermes-genui-overlay
+ * ═══════════════════════════════════════════════════════════════
+ *
+ * Injected into hermes-desktop via the overlay's apply.sh.
+ * These styles follow the existing Hermes Desktop design system:
+ *   - Dark theme (var(--bg-*), var(--text-*), var(--accent-*))
+ *   - Glassmorphism accents
+ *   - Smooth micro-animations
+ */
+
+/* ── Widget wrapper ── */
+
+.genui-widget-wrapper {
+  margin: 12px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.genui-widget-wrapper.genui-widget--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  /* Glassmorphism sticky effect */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.genui-widget-wrapper.genui-widget--settled {
+  position: relative;
+  z-index: auto;
+}
+
+/* ── Widget card ── */
+
+.genui-widget {
+  background: var(--bg-secondary, #1e1e2e);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text-primary, #e0e0e0);
+  font-family: inherit;
+}
+
+.genui-widget:hover {
+  border-color: var(--accent-color, rgba(139, 92, 246, 0.3));
+}
+
+/* ── Widget header ── */
+
+.genui-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.genui-widget-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #e0e0e0);
+  letter-spacing: 0.01em;
+}
+
+.genui-widget-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent-color, #8b5cf6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Widget body ── */
+
+.genui-widget-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.genui-widget-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.genui-widget-field:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.genui-widget-field-label {
+  font-size: 13px;
+  color: var(--text-secondary, #a0a0b0);
+}
+
+.genui-widget-field-value {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #e0e0e0);
+}
+
+/* ── Widget controls ── */
+
+.genui-widget-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.genui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.genui-btn:active {
+  transform: scale(0.97);
+}
+
+/* Counter-specific buttons */
+.genui-btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.genui-btn-icon:active {
+  transform: scale(0.92);
+}
+
+/* Primary action button */
+.genui-btn-primary {
+  background: var(--accent-color, #8b5cf6);
+  color: white;
+  border-color: transparent;
+}
+
+.genui-btn-primary:hover {
+  background: var(--accent-hover, #7c4fe0);
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Secondary action button */
+.genui-btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary, #e0e0e0);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.genui-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Danger action button */
+.genui-btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.genui-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* Ghost action button */
+.genui-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary, #a0a0b0);
+  border-color: transparent;
+}
+
+.genui-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary, #e0e0e0);
+}
+
+/* ── Actions bar ── */
+
+.genui-widget-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.genui-widget-actions .genui-btn {
+  flex: 1;
+}
+
+/* ── Error state ── */
+
+.genui-widget-error {
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 13px;
+}
+
+/* ── Animations ── */
+
+@keyframes genui-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.genui-widget-wrapper {
+  animation: genui-fade-in 0.35s ease-out;
+}
+
+/* ── Counter-specific ── */
+
+.genui-counter-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.genui-counter-value {
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #e0e0e0);
+  min-width: 60px;
+  text-align: center;
+  transition: color 0.2s ease;
+}
+
+/* ── Generic widget fields ── */
+
+.genui-generic-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.genui-generic-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.genui-generic-field-key {
+  font-size: 12px;
+  color: var(--text-secondary, #a0a0b0);
+  text-transform: capitalize;
+}
+
+.genui-generic-field-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #e0e0e0);
+}

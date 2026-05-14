@@ -42,6 +42,7 @@ echo ""
 echo "── Standalone files ──"
 rm -rf src/renderer/src/components/genui && echo "✓ Removed genui/ components" || true
 rm -f src/shared/genui-types.ts && echo "✓ Removed genui-types.ts" || true
+rm -f src/renderer/src/assets/genui.css && echo "✓ Removed genui.css" || true
 
 # ── 3. Remove plugin symlink ──
 

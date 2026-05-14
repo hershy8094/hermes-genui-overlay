@@ -66,6 +66,21 @@ else
     echo "⏭ genui/ components (source missing — will be created during implementation)"
 fi
 
+# GenUI CSS
+if [ -f "$SCRIPT_DIR/desktop/styles/genui.css" ]; then
+    cp "$SCRIPT_DIR/desktop/styles/genui.css" \
+       "$DESKTOP_DIR/src/renderer/src/assets/genui.css" 2>/dev/null && \
+       echo "✓ Copied genui.css" || echo "⏭ genui.css (already up to date)"
+    # Inject CSS import into main.css if not already present
+    MAIN_CSS="$DESKTOP_DIR/src/renderer/src/assets/main.css"
+    if [ -f "$MAIN_CSS" ] && ! grep -q "genui.css" "$MAIN_CSS"; then
+        echo '@import "./genui.css";  /* [GENUI-OVERLAY] */' >> "$MAIN_CSS"
+        echo "✓ Injected genui.css import into main.css"
+    fi
+else
+    echo "⏸ genui.css — not yet created"
+fi
+
 # ── 3. Copy genui_protocol.py into agent gateway ──
 
 echo ""
