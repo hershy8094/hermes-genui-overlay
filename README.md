@@ -7,14 +7,14 @@ An overlay package that adds **Generative UI (GenUI)** capabilities to [Hermes A
 This overlay is designed to survive frequent upstream updates. Changes are separated into three tiers:
 
 | Tier | Conflict Risk | Strategy |
-|------|--------------|----------|
+| ------ | -------------- | ---------- |
 | **Plugin** | ✅ None | Hermes plugin installed via symlink to `~/.hermes/plugins/genui/` |
 | **Standalone files** | ✅ None | New files copied into target repos (no upstream equivalent exists) |
 | **Patches** | ⚠️ Low | Marker-based insertions that find stable anchors in core files |
 
 ## Directory Structure
 
-```
+``` text
 hermes-genui-overlay/
 ├── apply.sh              ← Master apply script
 ├── revert.sh             ← Clean revert script
@@ -40,7 +40,8 @@ hermes-genui-overlay/
 ## Prerequisites
 
 - `hermes-agent` and `hermes-desktop` cloned as siblings:
-  ```
+
+  ``` text
   parent-dir/
   ├── hermes-agent/
   ├── hermes-desktop/
@@ -72,6 +73,7 @@ hermes-genui-overlay/
 Instead of fragile `git diff` patches that break when line numbers shift, this overlay uses **marker-based patching**: Python scripts that find stable code anchors (function signatures, dictionary keys, import blocks) and insert/modify code relative to those anchors. This approach survives upstream refactors as long as the anchor patterns remain.
 
 Each patch script:
+
 1. Reads the target file
 2. Finds a stable anchor pattern (regex or literal)
 3. Inserts, appends, or wraps code relative to the anchor

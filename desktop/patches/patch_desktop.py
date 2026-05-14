@@ -47,19 +47,20 @@ def patch_hermes_ts():
     )
 
     # 3. Handle hermes.genui.render in processCustomEvent
-    patcher.insert_after(
+    #    Use insert_before so the genui check is a sibling, not nested inside tool.progress
+    patcher.insert_before(
         anchor='if (eventType === "hermes.tool.progress" && cb.onToolProgress) {',
         insertion=(
-            '    // [GENUI-OVERLAY] Handle genui render events\n'
-            '    if (eventType === "hermes.genui.render" && cb.onGenUIRender) {\n'
-            '      try {\n'
-            '        const payload = JSON.parse(data);\n'
-            '        cb.onGenUIRender(payload);\n'
-            '      } catch {\n'
-            '        /* malformed genui payload — skip */\n'
-            '      }\n'
-            '      return;\n'
+            '  // [GENUI-OVERLAY] Handle genui render events\n'
+            '  if (eventType === "hermes.genui.render" && cb.onGenUIRender) {\n'
+            '    try {\n'
+            '      const payload = JSON.parse(data);\n'
+            '      cb.onGenUIRender(payload);\n'
+            '    } catch {\n'
+            '      /* malformed genui payload — skip */\n'
             '    }\n'
+            '    return;\n'
+            '  }\n'
         ),
         name="Handle hermes.genui.render event",
         marker="[GENUI-OVERLAY] Handle genui render events",
@@ -86,7 +87,8 @@ def patch_sse_parser():
     )
 
     # 2. Handle hermes.genui.render in processCustomEvent
-    patcher.insert_after(
+    #    Use insert_before so the genui check is a sibling, not nested inside tool.progress
+    patcher.insert_before(
         anchor='if (eventType === "hermes.tool.progress" && cb.onToolProgress) {',
         insertion=(
             '  // [GENUI-OVERLAY] Handle genui render events\n'
@@ -99,7 +101,7 @@ def patch_sse_parser():
             '    } catch {\n'
             '      /* malformed genui payload — skip */\n'
             '    }\n'
-            '  }\n'
+            '  }\n\n'
         ),
         name="Handle genui.render in sse-parser",
         marker="[GENUI-OVERLAY] Handle genui render events",
