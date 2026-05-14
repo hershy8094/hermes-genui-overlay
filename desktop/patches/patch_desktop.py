@@ -251,47 +251,46 @@ def patch_chat_tsx():
         marker="[GENUI-OVERLAY] Listen for GenUI render events",
     )
 
-    # 5. Add genUI dispatch handler
+    # 5. Add genUI dispatch handler — placed just before the component return
+    #    Use regex to match exactly 2-space-indented return (component level, not useEffect)
     patcher.insert_before(
-        anchor='return (',
+        anchor=r'^  return \($',
         insertion=(
             '  // [GENUI-OVERLAY] Handle widget state dispatches (4-tier tracking)\n'
             '  const handleGenUIDispatch = useCallback(\n'
             '    (widgetId: string, field: string | undefined, actionId: string | undefined,\n'
-            '     state: WidgetState, tracking: TrackingLevel) => {\n'
+            '     widgetState: WidgetState, tracking: TrackingLevel) => {\n'
             '      const update: GenUIStateUpdate = {\n'
             '        widgetId,\n'
             '        widgetType: genUIWidgets.find((w) => w.widgetId === widgetId)?.widgetType || "unknown",\n'
             '        field,\n'
             '        actionId,\n'
-            '        state,\n'
+            '        state: widgetState,\n'
             '        tracking,\n'
             '        timestamp: Date.now(),\n'
             '      };\n'
             '\n'
             '      if (tracking === "context") {\n'
-            '        genUIContextRef.current[widgetId] = state;\n'
+            '        genUIContextRef.current[widgetId] = widgetState;\n'
             '      } else if (tracking === "explicit") {\n'
             '        genUIExplicitRef.current.push(update);\n'
             '      } else if (tracking === "reply") {\n'
-            '        // Compose a structured reply message and send it\n'
             '        const replyPayload = {\n'
-            '          trigger: { widgetId, widgetType: update.widgetType, field, actionId, state },\n'
+            '          trigger: { widgetId, widgetType: update.widgetType, field, actionId, state: widgetState },\n'
             '          backgroundContext: { ...genUIContextRef.current },\n'
             '          explicitUpdates: [...genUIExplicitRef.current],\n'
             '        };\n'
-            '        // Clear accumulated explicit updates after sending\n'
             '        genUIExplicitRef.current = [];\n'
             '        const replyMsg = `[genui:reply] ${JSON.stringify(replyPayload)}`;\n'
             '        actions.handleSend(replyMsg);\n'
             '      }\n'
             '    },\n'
             '    [genUIWidgets, actions],\n'
-            '  );\n'
-            '\n'
+            '  );\n\n'
         ),
         name="GenUI dispatch handler",
         marker="[GENUI-OVERLAY] Handle widget state dispatches",
+        regex=True,
     )
 
     # 6. Clear widgets on new chat
