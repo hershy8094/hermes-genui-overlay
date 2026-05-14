@@ -1,0 +1,11 @@
+name: genui
+version: 0.1.0
+description: >
+  Generative UI (GenUI) overlay — enables the agent to render interactive React
+  widgets in the Hermes Desktop chat thread.  Provides the GenUI protocol module,
+  system prompt guidance, and transform_llm_output hook for parsing ```genui blocks.
+author: hershey
+kind: standalone
+provides_hooks:
+  - transform_llm_output
+  - pre_llm_call
