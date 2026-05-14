@@ -41,10 +41,11 @@ def apply():
             marker="GENUI_GUIDANCE",
         )
 
-        # 2. Inject GENUI_GUIDANCE after COMPUTER_USE_GUIDANCE block
-        #    Anchor: the line that appends COMPUTER_USE_GUIDANCE
+        # 2. Inject GENUI_GUIDANCE after PLATFORM_HINTS block (which is right
+        #    after platform_key is defined — the old anchor was before the
+        #    variable existed, causing it to never execute).
         patcher.insert_after(
-            anchor="stable_parts.append(COMPUTER_USE_GUIDANCE)",
+            anchor="stable_parts.append(PLATFORM_HINTS[platform_key])",
             insertion=GENUI_INJECTION,
             name="Inject GENUI_GUIDANCE for desktop platform",
             marker="[GENUI-OVERLAY]",

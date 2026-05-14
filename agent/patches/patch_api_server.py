@@ -79,15 +79,12 @@ def apply():
             marker="[GENUI-OVERLAY] Platform override from X-Hermes-Platform header",
         )
 
-        # 5. Pass platform into _create_agent (inside _run_agent._run)
+        # 5. Override the hardcoded platform="api_server" with the dynamic value
         patcher.replace_pattern(
-            pattern=r'(gateway_session_key=gateway_session_key,\n\s*\))',
-            replacement=(
-                'gateway_session_key=gateway_session_key,\n'
-                '            )  # [GENUI-OVERLAY] platform_override applied below\n'
-            ),
-            name="Placeholder for _create_agent platform pass-through",
-            marker="[GENUI-OVERLAY] platform_override applied below",
+            pattern=r'platform="api_server"',
+            replacement='platform=platform_override or "api_server",  # [GENUI-OVERLAY] dynamic platform',
+            name="Apply platform_override in _create_agent",
+            marker="[GENUI-OVERLAY] dynamic platform",
         )
 
         # 6. Patch the _emit helper to detect genui blocks
