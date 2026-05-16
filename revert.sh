@@ -5,8 +5,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-AGENT_DIR="$SCRIPT_DIR/../hermes-agent"
-DESKTOP_DIR="$SCRIPT_DIR/../hermes-desktop"
+AGENT_DIR="$SCRIPT_DIR/hermes-agent"
+DESKTOP_DIR="$SCRIPT_DIR/hermes-desktop"
 
 echo "═══════════════════════════════════════════"
 echo "  Reverting GenUI Overlay"

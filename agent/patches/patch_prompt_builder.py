@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from patch_utils import FilePatcher, PatchError
 
 OVERLAY_ROOT = Path(__file__).resolve().parent.parent.parent
-AGENT_DIR = OVERLAY_ROOT.parent / "hermes-agent"
+AGENT_DIR = OVERLAY_ROOT / "hermes-agent"
 TARGET = AGENT_DIR / "agent" / "prompt_builder.py"
 
 # The GENUI_GUIDANCE text to inject as a module-level constant
@@ -120,9 +120,11 @@ def apply():
     try:
         patcher = FilePatcher(TARGET)
 
-        # 1. Insert GENUI_GUIDANCE constant after COMPUTER_USE_GUIDANCE
+        # 1. Insert GENUI_GUIDANCE constant after DEVELOPER_ROLE_MODELS
+        #    This places it between COMPUTER_USE_GUIDANCE/DEVELOPER_ROLE_MODELS
+        #    and PLATFORM_HINTS — a safe, stable insertion point.
         patcher.insert_after(
-            anchor="force empty trash). You'll see an error if you try.",
+            anchor='DEVELOPER_ROLE_MODELS = ("gpt-5", "codex")',
             insertion=GENUI_GUIDANCE_BLOCK,
             name="Add GENUI_GUIDANCE constant",
             marker="[GENUI-OVERLAY]",

@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from patch_utils import FilePatcher, PatchError
 
 OVERLAY_ROOT = Path(__file__).resolve().parent.parent.parent
-DESKTOP_DIR = OVERLAY_ROOT.parent / "hermes-desktop"
+DESKTOP_DIR = OVERLAY_ROOT / "hermes-desktop"
 
 
 def patch_hermes_ts():
@@ -117,9 +117,9 @@ def patch_index_ts():
     target = DESKTOP_DIR / "src" / "main" / "index.ts"
     patcher = FilePatcher(target)
 
-    # Insert onGenUIRender callback inside sendMessage handler's callback object
-    patcher.insert_after(
-        anchor='onUsage: (usage) => {',
+    # Insert onGenUIRender callback as a sibling of onUsage in the sendMessage callback object
+    patcher.insert_before(
+        anchor='onUsage: (usage) =>',
         insertion=(
             '          // [GENUI-OVERLAY] Forward genui render events to renderer\n'
             '          onGenUIRender: (payload: unknown) => {\n'
@@ -182,17 +182,33 @@ def patch_preload_dts():
 
 
 def patch_chat_tsx():
-    """Chat.tsx: Add GenUI widget state management and rendering."""
+    """Chat.tsx: Add GenUI widget state management and inline rendering."""
     target = DESKTOP_DIR / "src" / "renderer" / "src" / "screens" / "Chat" / "Chat.tsx"
     patcher = FilePatcher(target)
 
-    # 1. Add GenUI imports
+    # 0. Ensure useMemo is imported (needed for widgetsByMessageId)
+    patcher.replace_text(
+        target='import { useCallback, useEffect, useRef, useState } from "react";',
+        replacement='import { useCallback, useEffect, useMemo, useRef, useState } from "react";',
+        name="Add useMemo import",
+        marker="useMemo",
+    )
+
+    # 1. Add GenUI imports (+ React for React.Fragment, + MessageRow for inline render)
     patcher.insert_after(
         anchor='import type { ChatMessage, UsageState } from "./types";',
         insertion=(
             '// [GENUI-OVERLAY] GenUI imports\n'
+            'import React from "react";\n'
+            'import { MessageRow } from "./MessageRow";\n'
             'import GenUIWidgetContainer from "../../components/genui/GenUIWidget";\n'
             'import type { GenUIRenderPayload, WidgetState, TrackingLevel, GenUIStateUpdate } from "../../../../shared/genui-types";\n'
+            '\n'
+            '// [GENUI-OVERLAY] Widget with message association\n'
+            'interface PlacedWidget {\n'
+            '  payload: GenUIRenderPayload;\n'
+            '  afterMessageId: string | null;\n'
+            '}\n'
         ),
         name="Add GenUI imports to Chat.tsx",
         marker="[GENUI-OVERLAY] GenUI imports",
@@ -204,7 +220,7 @@ def patch_chat_tsx():
         insertion=(
             '\n'
             '  // [GENUI-OVERLAY] GenUI state management\n'
-            '  const [genUIWidgets, setGenUIWidgets] = useState<GenUIRenderPayload[]>([]);\n'
+            '  const [genUIWidgets, setGenUIWidgets] = useState<PlacedWidget[]>([]);\n'
             '  const genUIContextRef = useRef<Record<string, WidgetState>>({});\n'
             '  const genUIExplicitRef = useRef<GenUIStateUpdate[]>([]);\n'
         ),
@@ -222,7 +238,8 @@ def patch_chat_tsx():
         marker="[GENUI-OVERLAY] setGenUIWidgets passed",
     )
 
-    # 4. Add the GenUI render listener effect
+    # 4. Add the GenUI render listener effect — stamp each widget with
+    #    the ID of the last message so we can render it after that message
     patcher.insert_after(
         anchor='}, [messages]);',
         insertion=(
@@ -233,26 +250,75 @@ def patch_chat_tsx():
             '      const p = payload as GenUIRenderPayload;\n'
             '      if (p && p.widgetId && p.widgetType) {\n'
             '        setGenUIWidgets((prev) => {\n'
+            '          // Determine which message this widget should appear after\n'
+            '          const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;\n'
+            '          const afterMessageId = lastMsg?.id ?? null;\n'
             '          // Replace existing widget with same ID, or add new\n'
-            '          const existing = prev.findIndex((w) => w.widgetId === p.widgetId);\n'
+            '          const existing = prev.findIndex((w) => w.payload.widgetId === p.widgetId);\n'
             '          if (existing >= 0) {\n'
             '            const next = [...prev];\n'
-            '            next[existing] = p;\n'
+            '            next[existing] = { payload: p, afterMessageId: next[existing].afterMessageId };\n'
             '            return next;\n'
             '          }\n'
-            '          return [...prev, p];\n'
+            '          return [...prev, { payload: p, afterMessageId }];\n'
             '        });\n'
             '      }\n'
             '    });\n'
             '    return cleanup;\n'
-            '  }, []);\n'
+            '  }, [messages]);\n'
         ),
         name="GenUI render listener effect",
         marker="[GENUI-OVERLAY] Listen for GenUI render events",
     )
 
+    # 4b. Add effect to parse genui blocks from stored messages (session restore)
+    #     When messages are loaded from a saved session, they contain raw ```genui
+    #     fenced code blocks. This effect extracts them into widget state and
+    #     strips the raw JSON from the displayed message content.
+    patcher.insert_after(
+        anchor='// [GENUI-OVERLAY] Listen for GenUI render events',
+        insertion=(
+            '\n'
+            '  // [GENUI-OVERLAY] Rehydrate genui blocks from stored messages (session restore)\n'
+            '  useEffect(() => {\n'
+            '    const GENUI_RE = /```genui\\s*([\\s\\S]*?)```/g;\n'
+            '    const found: PlacedWidget[] = [];\n'
+            '    let needsClean = false;\n'
+            '    for (const msg of messages) {\n'
+            '      if (msg.role !== "agent") continue;\n'
+            '      let match: RegExpExecArray | null;\n'
+            '      GENUI_RE.lastIndex = 0;\n'
+            '      while ((match = GENUI_RE.exec(msg.content)) !== null) {\n'
+            '        try {\n'
+            '          const payload = JSON.parse(match[1].trim()) as GenUIRenderPayload;\n'
+            '          if (payload.widgetId && payload.widgetType) {\n'
+            '            if (!genUIWidgets.some((w) => w.payload.widgetId === payload.widgetId)) {\n'
+            '              found.push({ payload, afterMessageId: msg.id });\n'
+            '            }\n'
+            '            needsClean = true;\n'
+            '          }\n'
+            '        } catch { /* ignore invalid JSON */ }\n'
+            '      }\n'
+            '    }\n'
+            '    if (found.length > 0) {\n'
+            '      setGenUIWidgets((prev) => [...prev, ...found]);\n'
+            '    }\n'
+            '    if (needsClean) {\n'
+            '      setMessages((prev) =>\n'
+            '        prev.map((m) => {\n'
+            '          if (m.role !== "agent" || !m.content.includes("```genui")) return m;\n'
+            '          return { ...m, content: m.content.replace(/```genui[\\s\\S]*?```/g, "").trim() };\n'
+            '        }),\n'
+            '      );\n'
+            '    }\n'
+            '  // eslint-disable-next-line react-hooks/exhaustive-deps\n'
+            '  }, [messages.length]);\n'
+        ),
+        name="Rehydrate genui blocks from stored messages",
+        marker="[GENUI-OVERLAY] Rehydrate genui blocks from stored messages",
+    )
+
     # 5. Add genUI dispatch handler — placed just before the component return
-    #    Use regex to match exactly 2-space-indented return (component level, not useEffect)
     patcher.insert_before(
         anchor=r'^  return \($',
         insertion=(
@@ -262,7 +328,7 @@ def patch_chat_tsx():
             '     widgetState: WidgetState, tracking: TrackingLevel) => {\n'
             '      const update: GenUIStateUpdate = {\n'
             '        widgetId,\n'
-            '        widgetType: genUIWidgets.find((w) => w.widgetId === widgetId)?.widgetType || "unknown",\n'
+            '        widgetType: genUIWidgets.find((w) => w.payload.widgetId === widgetId)?.payload.widgetType || "unknown",\n'
             '        field,\n'
             '        actionId,\n'
             '        state: widgetState,\n'
@@ -287,6 +353,16 @@ def patch_chat_tsx():
             '    },\n'
             '    [genUIWidgets, actions],\n'
             '  );\n\n'
+            '  // [GENUI-OVERLAY] Build a map of messageId -> widgets for inline rendering\n'
+            '  const widgetsByMessageId = useMemo(() => {\n'
+            '    const map = new Map<string | null, PlacedWidget[]>();\n'
+            '    for (const w of genUIWidgets) {\n'
+            '      const key = w.afterMessageId;\n'
+            '      if (!map.has(key)) map.set(key, []);\n'
+            '      map.get(key)!.push(w);\n'
+            '    }\n'
+            '    return map;\n'
+            '  }, [genUIWidgets]);\n\n'
         ),
         name="GenUI dispatch handler",
         marker="[GENUI-OVERLAY] Handle widget state dispatches",
@@ -305,22 +381,60 @@ def patch_chat_tsx():
         marker="[GENUI-OVERLAY] Clear widgets on new chat",
     )
 
-    # 7. Render GenUI widgets in the chat area
-    patcher.insert_after(
-        anchor='<div ref={bottomRef} />',
-        insertion=(
-            '        {/* [GENUI-OVERLAY] Render active GenUI widgets */}\n'
-            '        {genUIWidgets.map((widget, idx) => (\n'
-            '          <GenUIWidgetContainer\n'
-            '            key={widget.widgetId}\n'
-            '            payload={widget}\n'
-            '            isLatest={idx === genUIWidgets.length - 1}\n'
-            '            onDispatch={handleGenUIDispatch}\n'
+    # 7. Replace the MessageList ternary branch with a true interleaved render
+    #    that places widgets directly after their associated message.
+    #    We expand MessageList inline so messages and widgets alternate.
+    patcher.replace_text(
+        target=(
+            '        ) : (\n'
+            '          <MessageList\n'
+            '            messages={messages}\n'
+            '            isLoading={isLoading}\n'
+            '            toolProgress={toolProgress}\n'
+            '            onApprove={actions.handleApprove}\n'
+            '            onDeny={actions.handleDeny}\n'
             '          />\n'
-            '        ))}\n'
+            '        )}'
         ),
-        name="Render GenUI widgets",
-        marker="[GENUI-OVERLAY] Render active GenUI widgets",
+        replacement=(
+            '        ) : (\n'
+            '          <>\n'
+            '            {/* [GENUI-OVERLAY] Interleaved messages + widgets */}\n'
+            '            {messages.filter((m) => (m.content || "").trim()).map((msg, i, arr) => (\n'
+            '              <React.Fragment key={msg.id}>\n'
+            '                <MessageRow\n'
+            '                  msg={msg}\n'
+            '                  isLast={i === arr.length - 1}\n'
+            '                  isLoading={isLoading}\n'
+            '                  onApprove={actions.handleApprove}\n'
+            '                  onDeny={actions.handleDeny}\n'
+            '                />\n'
+            '                {(widgetsByMessageId.get(msg.id) || []).map((w) => (\n'
+            '                  <GenUIWidgetContainer\n'
+            '                    key={w.payload.widgetId}\n'
+            '                    payload={w.payload}\n'
+            '                    isLatest={false}\n'
+            '                    onDispatch={handleGenUIDispatch}\n'
+            '                  />\n'
+            '                ))}\n'
+            '              </React.Fragment>\n'
+            '            ))}\n'
+            '            {isLoading && messages.length > 0 && messages[messages.length - 1].role !== "agent" && (\n'
+            '              <div className="chat-message chat-message-agent">\n'
+            '                <div className="chat-bubble chat-bubble-agent">\n'
+            '                  <div className="chat-typing">\n'
+            '                    <span className="chat-typing-dot" />\n'
+            '                    <span className="chat-typing-dot" />\n'
+            '                    <span className="chat-typing-dot" />\n'
+            '                  </div>\n'
+            '                </div>\n'
+            '              </div>\n'
+            '            )}\n'
+            '          </>\n'
+            '        )}'
+        ),
+        name="Render GenUI widgets inline",
+        marker="[GENUI-OVERLAY] Render widgets inline",
     )
 
     changed = patcher.write()

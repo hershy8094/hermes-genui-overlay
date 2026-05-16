@@ -18,8 +18,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-AGENT_DIR="$SCRIPT_DIR/../hermes-agent"
-DESKTOP_DIR="$SCRIPT_DIR/../hermes-desktop"
+AGENT_DIR="$SCRIPT_DIR/hermes-agent"
+DESKTOP_DIR="$SCRIPT_DIR/hermes-desktop"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
 GREEN='\033[0;32m'
@@ -54,7 +54,7 @@ done
 
 if [ ! -d "$AGENT_DIR" ]; then
     echo -e "${RED}ERROR:${NC} hermes-agent not found at $AGENT_DIR"
-    echo "Expected layout: parent/ ├── hermes-agent/ ├── hermes-desktop/ └── hermes-genui-overlay/"
+    echo "Run ./setup.sh first to clone dependency repos."
     exit 1
 fi
 

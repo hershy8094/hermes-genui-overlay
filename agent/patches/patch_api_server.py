@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from patch_utils import FilePatcher, PatchError
 
 OVERLAY_ROOT = Path(__file__).resolve().parent.parent.parent
-AGENT_DIR = OVERLAY_ROOT.parent / "hermes-agent"
+AGENT_DIR = OVERLAY_ROOT / "hermes-agent"
 TARGET = AGENT_DIR / "gateway" / "platforms" / "api_server.py"
 
 
@@ -64,6 +64,25 @@ def apply():
             ),
             name="Thread platform_override (streaming)",
             marker="[GENUI-OVERLAY] Thread platform override",
+        )
+
+        # 3b. Add platform_override to _create_agent's method signature
+        #     Use multi-line pattern ending with ') -> Any:' for uniqueness
+        patcher.replace_pattern(
+            pattern=(
+                r'(tool_complete_callback=None,\n'
+                r'\s*gateway_session_key: Optional\[str\] = None,\n'
+                r'\s*\) -> Any:)'
+            ),
+            replacement=(
+                'tool_complete_callback=None,\n'
+                '        gateway_session_key: Optional[str] = None,\n'
+                '        # [GENUI-OVERLAY] Platform override from desktop client\n'
+                '        platform_override: Optional[str] = None,\n'
+                '    ) -> Any:'
+            ),
+            name="Add platform_override to _create_agent",
+            marker="[GENUI-OVERLAY] Platform override from desktop client",
         )
 
         # 4. Add platform_override param to _run_agent method signature
@@ -130,6 +149,7 @@ def apply():
             anchor='if isinstance(item, tuple) and len(item) == 2 and item[0] == "__tool_progress__"',
             insertion=(
                 '                # [GENUI-OVERLAY] GenUI block detection\n'
+                '                nonlocal _genui_buffer\n'
                 '                # Buffer content chunks and check for ```genui fenced code blocks.\n'
                 '                # When a complete genui block is found, emit it as a custom SSE event\n'
                 '                # instead of streaming it as raw markdown content.\n'

@@ -8,6 +8,7 @@
 
 import type { GenUIWidgetProps } from "../registry";
 
+
 export default function GenericWidget({
   widgetId,
   state,

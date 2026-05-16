@@ -3,6 +3,8 @@
  *
  * Defines the wire format for the bidirectional GenUI state-sync loop
  * between the Hermes agent (Python backend) and the desktop renderer.
+ *
+ * v2: Adds composable component trees via GenUINode and multi-page support.
  */
 
 export type WidgetId = string;
@@ -38,6 +40,41 @@ export interface GenUIAction {
   value?: unknown;
 }
 
+// ---------------------------------------------------------------------------
+// v2: Composable Component Tree
+// ---------------------------------------------------------------------------
+
+/**
+ * A single node in the GenUI component tree.
+ *
+ * Nodes can be layout containers (Stack, Grid, Card, PageView), content
+ * elements (Text, Badge, Image, Stat), interactive controls (Button, Input,
+ * Select), or data displays (DataTable, List). They nest arbitrarily via
+ * the `children` array, enabling Shopify-like block composition.
+ */
+export interface GenUINode {
+  /** Block type: "Stack", "Card", "Text", "Button", "Input", etc. */
+  type: string;
+  /** Unique key for this node (optional, auto-generated if missing). */
+  key?: string;
+  /** Props passed to this block (type-specific). */
+  props?: Record<string, unknown>;
+  /** Nested children — enables composition. */
+  children?: GenUINode[];
+  /** Bind this node to a widget state field (for inputs, selects, etc.). */
+  bind?: string;
+  /** Tracking level for this specific node's interactions. */
+  tracking?: TrackingLevel;
+  /** Navigate to a page when this node is activated (for Button). */
+  navigate?: string;
+  /** Custom inline style overrides (design token keys or CSS properties). */
+  style?: Record<string, string>;
+}
+
+// ---------------------------------------------------------------------------
+// Render Payload (v1 flat + v2 composable)
+// ---------------------------------------------------------------------------
+
 /** Payload for a `hermes.genui.render` SSE event. */
 export interface GenUIRenderPayload {
   widgetId: WidgetId;
@@ -48,7 +85,20 @@ export interface GenUIRenderPayload {
   actions: GenUIAction[];
   /** Agent-provided metadata (labels, descriptions, etc.). */
   meta?: Record<string, unknown>;
+
+  // --- v2 fields ---
+
+  /** Component tree — if present, uses BlockRenderer instead of legacy widgetType registry. */
+  children?: GenUINode[];
+  /** Template ID this was instantiated from (for agent reference). */
+  templateId?: string;
+  /** Initial page to show (for multi-page widgets). Defaults to first Page child. */
+  initialPage?: string;
 }
+
+// ---------------------------------------------------------------------------
+// State Updates (unchanged from v1)
+// ---------------------------------------------------------------------------
 
 /** A single state update record, tagged with its tracking level. */
 export interface GenUIStateUpdate {

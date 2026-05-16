@@ -207,16 +207,25 @@ class FilePatcher:
                     self.applied.append(name or f"append_to_imports({module})")
                     return self
 
-        # No existing import — create new one after last import block
+        # No existing import — create new one after last top-level import block
+        # Only scan until the first class/function/assignment to avoid matching
+        # lazy inline imports deep inside the file.
         names_str = ", ".join(names)
         new_import = f"from {module} import {names_str}"
         last_import_idx = 0
+        in_import_block = False
         for i, line in enumerate(lines):
             stripped = line.strip()
             if stripped.startswith("import ") or stripped.startswith("from "):
-                last_import_idx = i
-            elif stripped.startswith(")") and last_import_idx == i - 1:
+                # Only count top-level imports (no leading whitespace)
+                if not line[0:1].isspace():
+                    last_import_idx = i
+                    in_import_block = True
+            elif stripped.startswith(")") and in_import_block:
                 last_import_idx = i  # closing paren of multi-line import
+            elif in_import_block and stripped and not stripped.startswith("#") and not stripped.startswith(")"):
+                # Reached non-import content after imports — stop scanning
+                break
 
         lines.insert(last_import_idx + 1, new_import)
         self.content = "\n".join(lines)
@@ -246,6 +255,29 @@ class FilePatcher:
             )
         self.content = new_content
         self.applied.append(name or f"replace_pattern({pattern[:40]}...)")
+        return self
+
+    def replace_text(
+        self,
+        target: str,
+        replacement: str,
+        *,
+        name: str = "",
+        marker: str = "",
+    ) -> "FilePatcher":
+        """Replace an exact text occurrence (no regex)."""
+        if marker and marker in self.content:
+            self.skipped.append(name or f"replace_text({target[:40]}...)")
+            return self
+
+        if target not in self.content:
+            raise PatchError(
+                f"Target text not found for '{name or 'replace_text'}':\n"
+                f"  Target: {target[:80]}...\n"
+                f"  File: {self.filepath}"
+            )
+        self.content = self.content.replace(target, replacement, 1)
+        self.applied.append(name or f"replace_text({target[:40]}...)")
         return self
 
     def append_to_file(

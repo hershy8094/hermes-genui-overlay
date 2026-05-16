@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from patch_utils import FilePatcher, PatchError
 
 OVERLAY_ROOT = Path(__file__).resolve().parent.parent.parent
-AGENT_DIR = OVERLAY_ROOT.parent / "hermes-agent"
+AGENT_DIR = OVERLAY_ROOT / "hermes-agent"
 TARGET = AGENT_DIR / "run_agent.py"
 
 GENUI_INJECTION = '''

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "typeRoots": ["./hermes-desktop/node_modules/@types"],
+    "paths": {
+      "react": ["./hermes-desktop/node_modules/@types/react"],
+      "react/jsx-runtime": ["./hermes-desktop/node_modules/@types/react/jsx-runtime"],
+      "@renderer/*": ["./hermes-desktop/src/renderer/src/*"],
+      "../../../../shared/genui-types": ["./desktop/components/genui-types"]
+    }
+  },
+  "include": [
+    "desktop/**/*"
+  ]
+}

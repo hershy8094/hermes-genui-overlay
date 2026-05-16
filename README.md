@@ -2,6 +2,22 @@
 
 An overlay package that adds **Generative UI (GenUI)** capabilities to [Hermes Agent](https://github.com/NousResearch/hermes-agent) and [Hermes Desktop](https://github.com/fathah/hermes-desktop) — enabling the agent to render interactive React widgets as first-class chat responses.
 
+## Quick Start
+
+```bash
+# Clone this repo
+git clone https://github.com/hershy8094/hermes-genui-overlay.git
+cd hermes-genui-overlay
+
+# Clone dependency repos (hermes-agent + hermes-desktop)
+./setup.sh
+
+# Install agent, apply overlay, and launch desktop
+./dev.sh
+```
+
+That's it — one repo, three commands.
+
 ## Architecture
 
 This overlay is designed to survive frequent upstream updates. Changes are separated into three tiers:
@@ -15,45 +31,50 @@ This overlay is designed to survive frequent upstream updates. Changes are separ
 ## Directory Structure
 
 ``` text
-hermes-genui-overlay/
-├── apply.sh              ← Master apply script
-├── revert.sh             ← Clean revert script
-├── pull-and-patch.sh     ← Pull upstream + re-apply
+hermes-genui-overlay/          ← this repo (top-level workspace)
+├── setup.sh                   ← Clone dependency repos
+├── dev.sh                     ← Install + apply + launch
+├── apply.sh                   ← Apply overlay patches
+├── revert.sh                  ← Clean revert
+├── pull-and-patch.sh          ← Pull upstream + re-apply
 │
-├── agent/                ← Backend overlay (hermes-agent)
-│   ├── plugin/           ← Zero-conflict hermes plugin
+├── hermes-agent/              ← Cloned by setup.sh (gitignored)
+├── hermes-desktop/            ← Cloned by setup.sh (gitignored)
+│
+├── agent/                     ← Backend overlay (hermes-agent)
+│   ├── plugin/                ← Zero-conflict hermes plugin
 │   │   ├── plugin.yaml
 │   │   ├── __init__.py
 │   │   ├── genui_protocol.py
-│   │   └── prompt_guidance.py
-│   └── patches/          ← Marker-based patches for core files
-│       └── *.py          ← Patch scripts (not raw diffs)
+│   │   ├── prompt_guidance.py
+│   │   └── template_store.py
+│   └── patches/               ← Marker-based patches for core files
+│       └── *.py
 │
-└── desktop/              ← Frontend overlay (hermes-desktop)
-    ├── components/       ← Standalone files (copy-in)
-    │   ├── genui-types.ts
-    │   └── genui/
-    └── patches/          ← Marker-based patches for core files
-        └── *.py          ← Patch scripts (not raw diffs)
+├── desktop/                   ← Frontend overlay (hermes-desktop)
+│   ├── components/
+│   │   ├── genui-types.ts     ← Shared type definitions
+│   │   └── genui/
+│   │       ├── blockRegistry.ts
+│   │       ├── BlockRenderer.tsx
+│   │       ├── GenUIWidget.tsx
+│   │       └── blocks/        ← 25 composable block components
+│   ├── styles/
+│   │   ├── genui.css
+│   │   └── genui-blocks.css
+│   └── patches/
+│       └── *.py
+│
+└── tsconfig.json              ← IDE support (resolves types from hermes-desktop)
 ```
-
-## Prerequisites
-
-- `hermes-agent` and `hermes-desktop` cloned as siblings:
-
-  ``` text
-  parent-dir/
-  ├── hermes-agent/
-  ├── hermes-desktop/
-  └── hermes-genui-overlay/   ← this repo
-  ```
 
 ## Usage
 
 ### First-time setup
 
 ```bash
-./apply.sh
+./setup.sh   # Clone hermes-agent + hermes-desktop
+./dev.sh     # Install + apply + launch
 ```
 
 ### After pulling upstream updates
@@ -66,6 +87,15 @@ hermes-genui-overlay/
 
 ```bash
 ./revert.sh
+```
+
+### Individual commands
+
+```bash
+./dev.sh --apply       # Apply overlay only (no install/launch)
+./dev.sh --install     # Install agent from source only
+./dev.sh --no-install  # Apply + launch (skip agent install)
+./setup.sh --force     # Re-clone dependency repos
 ```
 
 ## How Patches Work

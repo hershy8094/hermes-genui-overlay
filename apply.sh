@@ -5,23 +5,20 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-AGENT_DIR="$SCRIPT_DIR/../hermes-agent"
-DESKTOP_DIR="$SCRIPT_DIR/../hermes-desktop"
+AGENT_DIR="$SCRIPT_DIR/hermes-agent"
+DESKTOP_DIR="$SCRIPT_DIR/hermes-desktop"
 
 # ── Validation ──
 
 if [ ! -d "$AGENT_DIR" ]; then
     echo "ERROR: hermes-agent not found at $AGENT_DIR"
-    echo "Expected directory layout:"
-    echo "  parent/"
-    echo "  ├── hermes-agent/"
-    echo "  ├── hermes-desktop/"
-    echo "  └── hermes-genui-overlay/  ← you are here"
+    echo "Run ./setup.sh first to clone dependency repos."
     exit 1
 fi
 
 if [ ! -d "$DESKTOP_DIR" ]; then
     echo "ERROR: hermes-desktop not found at $DESKTOP_DIR"
+    echo "Run ./setup.sh first to clone dependency repos."
     exit 1
 fi
 
@@ -58,6 +55,7 @@ cp "$SCRIPT_DIR/desktop/components/genui-types.ts" \
 
 # GenUI components
 mkdir -p "$DESKTOP_DIR/src/renderer/src/components/genui/widgets"
+mkdir -p "$DESKTOP_DIR/src/renderer/src/components/genui/blocks"
 if [ -d "$SCRIPT_DIR/desktop/components/genui" ]; then
     cp -r "$SCRIPT_DIR/desktop/components/genui/"* \
        "$DESKTOP_DIR/src/renderer/src/components/genui/" 2>/dev/null && \
@@ -66,20 +64,29 @@ else
     echo "⏭ genui/ components (source missing — will be created during implementation)"
 fi
 
-# GenUI CSS
+# GenUI CSS (v1 base + v2 blocks)
+MAIN_CSS="$DESKTOP_DIR/src/renderer/src/assets/main.css"
 if [ -f "$SCRIPT_DIR/desktop/styles/genui.css" ]; then
     cp "$SCRIPT_DIR/desktop/styles/genui.css" \
        "$DESKTOP_DIR/src/renderer/src/assets/genui.css" 2>/dev/null && \
        echo "✓ Copied genui.css" || echo "⏭ genui.css (already up to date)"
-    # Inject CSS import into main.css if not already present
-    MAIN_CSS="$DESKTOP_DIR/src/renderer/src/assets/main.css"
     if [ -f "$MAIN_CSS" ] && ! grep -q "genui.css" "$MAIN_CSS"; then
-        # @import must precede all other statements — prepend, don't append
         sed -i '' '1s/^/@import ".\/genui.css";  \/* [GENUI-OVERLAY] *\/\'$'\n/' "$MAIN_CSS"
         echo "✓ Injected genui.css import into main.css"
     fi
 else
     echo "⏸ genui.css — not yet created"
+fi
+if [ -f "$SCRIPT_DIR/desktop/styles/genui-blocks.css" ]; then
+    cp "$SCRIPT_DIR/desktop/styles/genui-blocks.css" \
+       "$DESKTOP_DIR/src/renderer/src/assets/genui-blocks.css" 2>/dev/null && \
+       echo "✓ Copied genui-blocks.css" || echo "⏭ genui-blocks.css (already up to date)"
+    if [ -f "$MAIN_CSS" ] && ! grep -q "genui-blocks.css" "$MAIN_CSS"; then
+        sed -i '' '1s/^/@import ".\/genui-blocks.css";  \/* [GENUI-OVERLAY-v2] *\/\'$'\n/' "$MAIN_CSS"
+        echo "✓ Injected genui-blocks.css import into main.css"
+    fi
+else
+    echo "⏸ genui-blocks.css — not yet created"
 fi
 
 # ── 3. Copy genui_protocol.py into agent gateway ──

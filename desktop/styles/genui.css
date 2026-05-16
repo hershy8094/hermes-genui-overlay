@@ -2,232 +2,340 @@
  * GenUI Widget Styles — hermes-genui-overlay
  * ═══════════════════════════════════════════════════════════════
  *
- * Injected into hermes-desktop via the overlay's apply.sh.
- * These styles follow the existing Hermes Desktop design system:
- *   - Dark theme (var(--bg-*), var(--text-*), var(--accent-*))
- *   - Glassmorphism accents
- *   - Smooth micro-animations
+ * Uses the Hermes Desktop design tokens:
+ *   --bg-secondary, --bg-tertiary, --bg-elevated, --bg-hover, --bg-active
+ *   --text-primary, --text-secondary, --text-muted
+ *   --accent, --accent-hover, --accent-subtle, --accent-text
+ *   --border, --border-bright
+ *   --radius-sm/md/lg, --transition, --font-sans
  */
 
-/* ── Widget wrapper ── */
+/* ── Widget wrapper (GenUIWidget.tsx) ── */
 
 .genui-widget-wrapper {
-  margin: 12px 0;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  margin: 8px 0;
+  border-radius: var(--radius-lg, 14px);
+  transition: all var(--transition, 150ms ease);
+  flex-shrink: 0;
 }
 
-.genui-widget-wrapper.genui-widget--sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 50;
-  /* Glassmorphism sticky effect */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.genui-widget-wrapper.genui-widget--settled {
-  position: relative;
-  z-index: auto;
-}
-
-/* ── Widget card ── */
+/* ── Widget card (GenUIWidget.tsx) ── */
 
 .genui-widget {
-  background: var(--bg-secondary, #1e1e2e);
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-  border-radius: 12px;
-  padding: 16px;
-  color: var(--text-primary, #e0e0e0);
-  font-family: inherit;
+  background: var(--bg-tertiary, #2f2f2f);
+  border: 1px solid var(--border-bright, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-lg, 14px);
+  padding: 16px 20px;
+  color: var(--text-primary, #ececec);
+  font-family: var(--font-sans, inherit);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: border-color var(--transition, 150ms ease),
+              box-shadow var(--transition, 150ms ease);
 }
 
 .genui-widget:hover {
-  border-color: var(--accent-color, rgba(139, 92, 246, 0.3));
+  border-color: var(--accent, #003f7a);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* ── Widget header ── */
+/* ── Shared action bar (used by Counter + Generic) ── */
 
-.genui-widget-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.genui-widget-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary, #e0e0e0);
-  letter-spacing: 0.01em;
-}
-
-.genui-widget-badge {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--accent-color, #8b5cf6);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ── Widget body ── */
-
-.genui-widget-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.genui-widget-field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.genui-widget-field:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.genui-widget-field-label {
-  font-size: 13px;
-  color: var(--text-secondary, #a0a0b0);
-}
-
-.genui-widget-field-value {
-  font-size: 15px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary, #e0e0e0);
-}
-
-/* ── Widget controls ── */
-
-.genui-widget-controls {
+.genui-widget-actions {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  flex-wrap: wrap;
 }
 
-.genui-btn {
+/* ── Shared action button (genui-action-btn in components) ── */
+
+.genui-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 6px);
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid transparent;
+  font-family: var(--font-sans, inherit);
+  border: 1px solid var(--border-bright, rgba(255, 255, 255, 0.1));
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition, 150ms ease);
   line-height: 1;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-elevated, #303030);
+  color: var(--text-primary, #ececec);
+  flex: 1;
+  min-width: 0;
 }
 
-.genui-btn:active {
+.genui-action-btn:hover {
+  background: var(--bg-hover, #3a3a3a);
+  border-color: var(--accent, #003f7a);
+}
+
+.genui-action-btn:active {
   transform: scale(0.97);
+  background: var(--accent, #003f7a);
+  color: #fff;
 }
 
-/* Counter-specific buttons */
-.genui-btn-icon {
-  width: 32px;
-  height: 32px;
+/* Action button style variants */
+.genui-action-primary {
+  background: var(--accent, #003f7a);
+  color: #fff;
+  border-color: transparent;
+}
+
+.genui-action-primary:hover {
+  background: var(--accent-hover, #0055a4);
+  box-shadow: 0 2px 10px rgba(0, 63, 122, 0.3);
+}
+
+.genui-action-secondary {
+  background: var(--bg-elevated, #303030);
+  color: var(--text-primary, #ececec);
+  border-color: var(--border-bright, rgba(255, 255, 255, 0.1));
+}
+
+.genui-action-secondary:hover {
+  background: var(--bg-hover, #3a3a3a);
+}
+
+.genui-action-danger {
+  background: var(--error-bg, rgba(239, 68, 68, 0.1));
+  color: var(--error, #ef4444);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.genui-action-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.genui-action-ghost {
+  background: transparent;
+  color: var(--text-secondary, #b4b4b4);
+  border-color: transparent;
+}
+
+.genui-action-ghost:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary, #ececec);
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * CounterWidget (CounterWidget.tsx)
+ * ══════════════════════════════════════════════════════════════ */
+
+.genui-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.genui-counter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #ececec);
+  margin-bottom: 8px;
+}
+
+.genui-counter-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.genui-counter-btn {
+  width: 36px;
+  height: 36px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 18px;
   font-weight: 600;
+  font-family: var(--font-sans, inherit);
   cursor: pointer;
-  transition: all 0.15s ease;
-  border: 1px solid transparent;
+  transition: all var(--transition, 150ms ease);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-elevated, #303030);
+  color: var(--text-primary, #ececec);
+  border: 1px solid var(--border-bright, rgba(255, 255, 255, 0.1));
 }
 
-.genui-btn-icon:active {
+.genui-counter-btn:hover {
+  background: var(--accent-subtle, rgba(0, 63, 122, 0.15));
+  border-color: var(--accent, #003f7a);
+  color: var(--accent-text, #006acd);
+}
+
+.genui-counter-btn:active {
   transform: scale(0.92);
+  background: var(--accent, #003f7a);
+  color: #fff;
 }
 
-/* Primary action button */
-.genui-btn-primary {
-  background: var(--accent-color, #8b5cf6);
-  color: white;
-  border-color: transparent;
+.genui-counter-value {
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #ececec);
+  min-width: 60px;
+  text-align: center;
+  transition: color 0.2s ease;
 }
 
-.genui-btn-primary:hover {
-  background: var(--accent-hover, #7c4fe0);
-  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
-}
+/* ══════════════════════════════════════════════════════════════
+ * GenericWidget (GenericWidget.tsx)
+ * ══════════════════════════════════════════════════════════════ */
 
-/* Secondary action button */
-.genui-btn-secondary {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary, #e0e0e0);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.genui-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Danger action button */
-.genui-btn-danger {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.2);
-}
-
-.genui-btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.35);
-}
-
-/* Ghost action button */
-.genui-btn-ghost {
-  background: transparent;
-  color: var(--text-secondary, #a0a0b0);
-  border-color: transparent;
-}
-
-.genui-btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary, #e0e0e0);
-}
-
-/* ── Actions bar ── */
-
-.genui-widget-actions {
+.genui-generic {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.genui-widget-actions .genui-btn {
-  flex: 1;
+.genui-generic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+
+.genui-generic-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #ececec);
+}
+
+.genui-generic-description {
+  font-size: 13px;
+  color: var(--text-secondary, #b4b4b4);
+  line-height: 1.5;
+}
+
+.genui-generic-state {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.genui-generic-field {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-hover, rgba(255, 255, 255, 0.03));
+}
+
+.genui-generic-key {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #8e8e8e);
+  text-transform: capitalize;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.genui-generic-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #ececec);
+  word-break: break-word;
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * QuizWidget (QuizWidget.tsx)
+ * ══════════════════════════════════════════════════════════════ */
+
+.genui-quiz {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.genui-quiz-header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+
+.genui-quiz-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #ececec);
+}
+
+.genui-quiz-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.genui-quiz-question {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.genui-quiz-question-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #ececec);
+  line-height: 1.4;
+}
+
+.genui-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.genui-quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-hover, rgba(255, 255, 255, 0.03));
+  cursor: pointer;
+  transition: all var(--transition, 150ms ease);
+}
+
+.genui-quiz-option:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+}
+
+.genui-quiz-option input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.genui-quiz-option span {
+  font-size: 13px;
+  color: var(--text-secondary, #b4b4b4);
 }
 
 /* ── Error state ── */
 
 .genui-widget-error {
   padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--error-bg, rgba(239, 68, 68, 0.08));
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 8px;
-  color: #f87171;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--error, #ef4444);
   font-size: 13px;
 }
 
@@ -245,54 +353,5 @@
 }
 
 .genui-widget-wrapper {
-  animation: genui-fade-in 0.35s ease-out;
-}
-
-/* ── Counter-specific ── */
-
-.genui-counter-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 12px 0;
-}
-
-.genui-counter-value {
-  font-size: 32px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary, #e0e0e0);
-  min-width: 60px;
-  text-align: center;
-  transition: color 0.2s ease;
-}
-
-/* ── Generic widget fields ── */
-
-.genui-generic-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.genui-generic-field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.genui-generic-field-key {
-  font-size: 12px;
-  color: var(--text-secondary, #a0a0b0);
-  text-transform: capitalize;
-}
-
-.genui-generic-field-val {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary, #e0e0e0);
+  animation: genui-fade-in 0.3s ease-out;
 }

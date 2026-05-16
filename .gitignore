@@ -5,3 +5,7 @@ __pycache__/
 dist/
 build/
 .env
+
+# Dependency repos (cloned by setup.sh)
+hermes-agent/
+hermes-desktop/
