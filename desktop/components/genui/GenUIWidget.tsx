@@ -18,7 +18,7 @@ import type {
   GenUIStateField,
   WidgetState,
   TrackingLevel,
-} from "../../../../shared/genui-types";
+} from "../genui-types";
 
 // Ensure all built-in widgets are registered (legacy)
 import "./widgets";

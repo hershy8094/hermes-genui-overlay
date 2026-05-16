@@ -9,7 +9,7 @@
  */
 
 import type { ComponentType } from "react";
-import type { GenUINode, WidgetState, TrackingLevel } from "../../../../shared/genui-types";
+import type { GenUINode, WidgetState, TrackingLevel } from "../genui-types";
 
 /** Props injected into every registered block component. */
 export interface BlockProps {

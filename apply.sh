@@ -60,6 +60,10 @@ if [ -d "$SCRIPT_DIR/desktop/components/genui" ]; then
     cp -r "$SCRIPT_DIR/desktop/components/genui/"* \
        "$DESKTOP_DIR/src/renderer/src/components/genui/" 2>/dev/null && \
        echo "✓ Copied genui/ components" || echo "⏭ genui/ (already up to date)"
+    # Rewrite imports: overlay uses ../genui-types, desktop build needs ../../../../shared/genui-types
+    find "$DESKTOP_DIR/src/renderer/src/components/genui" \( -name "*.ts" -o -name "*.tsx" \) \
+        -exec sed -i '' 's|from "../genui-types"|from "../../../../shared/genui-types"|g' {} +
+    echo "✓ Rewrote genui-types import paths for desktop build"
 else
     echo "⏭ genui/ components (source missing — will be created during implementation)"
 fi

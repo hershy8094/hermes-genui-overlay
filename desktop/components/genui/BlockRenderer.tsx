@@ -12,7 +12,7 @@
 
 import { useMemo } from "react";
 import { getBlock } from "./blockRegistry";
-import type { GenUINode, WidgetState } from "../../../../shared/genui-types";
+import type { GenUINode, WidgetState } from "../genui-types";
 
 // Ensure all built-in blocks are registered
 import "./blocks";

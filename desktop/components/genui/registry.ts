@@ -11,7 +11,7 @@ import type {
   WidgetState,
   GenUIAction,
   GenUIStateField,
-} from "../../../../shared/genui-types";
+} from "../genui-types";
 
 /** Props injected into every registered widget component. */
 export interface GenUIWidgetProps {

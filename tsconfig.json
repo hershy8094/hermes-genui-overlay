@@ -17,8 +17,7 @@
     "paths": {
       "react": ["./hermes-desktop/node_modules/@types/react"],
       "react/jsx-runtime": ["./hermes-desktop/node_modules/@types/react/jsx-runtime"],
-      "@renderer/*": ["./hermes-desktop/src/renderer/src/*"],
-      "../../../../shared/genui-types": ["./desktop/components/genui-types"]
+      "@renderer/*": ["./hermes-desktop/src/renderer/src/*"]
     }
   },
   "include": [
