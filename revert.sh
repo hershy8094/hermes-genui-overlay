@@ -36,6 +36,7 @@ git checkout -- src/preload/index.ts 2>/dev/null && echo "✓ preload/index.ts" 
 git checkout -- src/preload/index.d.ts 2>/dev/null && echo "✓ preload/index.d.ts" || echo "⏭ preload/index.d.ts (clean)"
 git checkout -- src/renderer/src/screens/Chat/Chat.tsx 2>/dev/null && echo "✓ Chat.tsx" || echo "⏭ Chat.tsx (clean)"
 git checkout -- src/renderer/src/assets/main.css 2>/dev/null && echo "✓ main.css" || echo "⏭ main.css (clean)"
+git checkout -- src/main/installer.ts 2>/dev/null && echo "✓ installer.ts" || echo "⏭ installer.ts (clean)"
 
 # Remove standalone files (not tracked by upstream)
 echo ""
@@ -43,6 +44,8 @@ echo "── Standalone files ──"
 rm -rf src/renderer/src/components/genui && echo "✓ Removed genui/ components" || true
 rm -f src/shared/genui-types.ts && echo "✓ Removed genui-types.ts" || true
 rm -f src/renderer/src/assets/genui.css && echo "✓ Removed genui.css" || true
+rm -f src/renderer/src/assets/genui-blocks.css && echo "✓ Removed genui-blocks.css" || true
+git checkout -- package-lock.json 2>/dev/null && echo "✓ Restored package-lock.json" || echo "⏭ package-lock.json (clean)"
 
 # ── 3. Remove plugin symlink ──
 

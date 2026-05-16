@@ -12,11 +12,13 @@ cd hermes-genui-overlay
 # Clone dependency repos (hermes-agent + hermes-desktop)
 ./setup.sh
 
-# Install agent, apply overlay, and launch desktop
-./dev.sh
+# Build and install the app
+./install.sh
 ```
 
-That's it — one repo, three commands.
+That's it — one repo, three commands. Works with existing Hermes installations.
+
+> For development with hot-reload, use `./dev.sh` instead of `./install.sh`.
 
 ## Architecture
 
@@ -33,7 +35,8 @@ This overlay is designed to survive frequent upstream updates. Changes are separ
 ``` text
 hermes-genui-overlay/          ← this repo (top-level workspace)
 ├── setup.sh                   ← Clone dependency repos
-├── dev.sh                     ← Install + apply + launch
+├── install.sh                 ← Build + install production app
+├── dev.sh                     ← Development mode (hot-reload)
 ├── apply.sh                   ← Apply overlay patches
 ├── revert.sh                  ← Clean revert
 ├── pull-and-patch.sh          ← Pull upstream + re-apply
@@ -73,8 +76,14 @@ hermes-genui-overlay/          ← this repo (top-level workspace)
 ### First-time setup
 
 ```bash
-./setup.sh   # Clone hermes-agent + hermes-desktop
-./dev.sh     # Install + apply + launch
+./setup.sh     # Clone hermes-agent + hermes-desktop
+./install.sh   # Build + install app to /Applications
+```
+
+### Development mode
+
+```bash
+./dev.sh       # Install + apply + launch with hot-reload (locks terminal)
 ```
 
 ### After pulling upstream updates
@@ -92,10 +101,13 @@ hermes-genui-overlay/          ← this repo (top-level workspace)
 ### Individual commands
 
 ```bash
-./dev.sh --apply       # Apply overlay only (no install/launch)
-./dev.sh --install     # Install agent from source only
-./dev.sh --no-install  # Apply + launch (skip agent install)
-./setup.sh --force     # Re-clone dependency repos
+./install.sh --apply      # Apply overlay only (no build)
+./install.sh --build      # Build desktop only (skip agent install)
+./install.sh --no-build   # Install agent + apply, skip building
+./dev.sh --apply          # Apply overlay only (no launch)
+./dev.sh --install        # Install agent from source only
+./dev.sh --no-install     # Apply + launch (skip agent install)
+./setup.sh --force        # Re-clone dependency repos
 ```
 
 ## How Patches Work

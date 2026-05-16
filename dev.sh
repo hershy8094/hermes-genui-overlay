@@ -144,6 +144,37 @@ if [ "$DO_APPLY" = true ]; then
 fi
 
 # ══════════════════════════════════════════════════════════════════
+# Step 2.5: Kill stale gateway from a different install path
+# ══════════════════════════════════════════════════════════════════
+
+PID_FILE="$HERMES_HOME/gateway.pid"
+if [ -f "$PID_FILE" ]; then
+    STALE_PID=$(python3 -c "
+import json
+try:
+    with open('$PID_FILE') as f:
+        d = json.load(f)
+    pid = d.get('pid')
+    argv = d.get('argv', [])
+    if argv and '$AGENT_DIR' not in ' '.join(str(a) for a in argv):
+        print(pid or '')
+    else:
+        print('')
+except Exception:
+    print('')
+" 2>/dev/null)
+
+    if [ -n "$STALE_PID" ] && kill -0 "$STALE_PID" 2>/dev/null; then
+        echo -e "${YELLOW}⚠${NC} Stopping stale gateway (PID $STALE_PID) from previous install..."
+        kill "$STALE_PID" 2>/dev/null || true
+        sleep 1
+        kill -0 "$STALE_PID" 2>/dev/null && kill -9 "$STALE_PID" 2>/dev/null || true
+        echo -e "${GREEN}✓${NC} Stopped old gateway — a fresh one will start automatically"
+        echo ""
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════
 # Step 3: Install desktop npm deps + launch
 # ══════════════════════════════════════════════════════════════════
 
