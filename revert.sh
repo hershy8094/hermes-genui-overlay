@@ -18,6 +18,7 @@ echo ""
 echo "── Backend (git checkout) ──"
 cd "$AGENT_DIR"
 git checkout -- agent/prompt_builder.py 2>/dev/null && echo "✓ prompt_builder.py" || echo "⏭ prompt_builder.py (clean)"
+git checkout -- agent/system_prompt.py 2>/dev/null && echo "✓ system_prompt.py" || echo "⏭ system_prompt.py (clean)"
 git checkout -- run_agent.py 2>/dev/null && echo "✓ run_agent.py" || echo "⏭ run_agent.py (clean)"
 git checkout -- gateway/platforms/api_server.py 2>/dev/null && echo "✓ api_server.py" || echo "⏭ api_server.py (clean)"
 
