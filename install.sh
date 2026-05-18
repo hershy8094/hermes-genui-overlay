@@ -254,6 +254,10 @@ if [ "$DO_BUILD" = true ]; then
     echo -e "${CYAN}→${NC}  Building production app (this may take a minute)..."
     echo ""
 
+    # Step 3a: Compile TypeScript/React → JS (electron-vite)
+    npx electron-vite build 2>&1 | tail -5
+
+    # Step 3b: Package into .app/.dmg (electron-builder)
     # Build without notarization (requires Apple Developer credentials)
     # and without publishing to GitHub releases
     CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --config.mac.notarize=false --publish=never 2>&1 | tail -20
