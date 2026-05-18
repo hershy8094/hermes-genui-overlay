@@ -399,7 +399,7 @@ def patch_chat_tsx():
         replacement=(
             '        ) : (\n'
             '          <>\n'
-            '            {/* [GENUI-OVERLAY] Interleaved messages + widgets */}\n'
+            '            {/* [GENUI-OVERLAY] Render widgets inline */}\n'
             '            {messages.filter((m) => (m.content || "").trim()).map((msg, i, arr) => (\n'
             '              <React.Fragment key={msg.id}>\n'
             '                <MessageRow\n'

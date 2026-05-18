@@ -53,9 +53,24 @@ def register(ctx) -> None:
             TEMPLATE_LIST_SCHEMA,
             TEMPLATE_VIEW_SCHEMA,
         )
-        ctx.register_tool("template_manage", template_manage, TEMPLATE_MANAGE_SCHEMA)
-        ctx.register_tool("template_list", template_list, TEMPLATE_LIST_SCHEMA)
-        ctx.register_tool("template_view", template_view, TEMPLATE_VIEW_SCHEMA)
+        ctx.register_tool(
+            name="template_manage",
+            toolset="genui",
+            schema=TEMPLATE_MANAGE_SCHEMA,
+            handler=template_manage,
+        )
+        ctx.register_tool(
+            name="template_list",
+            toolset="genui",
+            schema=TEMPLATE_LIST_SCHEMA,
+            handler=template_list,
+        )
+        ctx.register_tool(
+            name="template_view",
+            toolset="genui",
+            schema=TEMPLATE_VIEW_SCHEMA,
+            handler=template_view,
+        )
         logger.info("GenUI template tools registered")
     except Exception:
         logger.warning("Failed to register template tools", exc_info=True)
