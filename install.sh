@@ -256,7 +256,7 @@ if [ "$DO_BUILD" = true ]; then
 
     # Build without notarization (requires Apple Developer credentials)
     # and without publishing to GitHub releases
-    CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --config.mac.notarize=null --publish=never 2>&1 | tail -20
+    CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --config.mac.notarize=false --publish=never 2>&1 | tail -20
 
     echo ""
 
