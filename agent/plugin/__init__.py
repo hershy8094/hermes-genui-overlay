@@ -1,45 +1,27 @@
 """
 GenUI Plugin — Entry Point
 
-Registers hooks for GenUI system prompt injection, output transformation,
-and template management tools.
+Registers hooks for GenUI output transformation, template management tools,
+and composable block skills (supplementary docs via skill_view).
 
-This plugin is loaded via the hermes plugin system. It registers:
-- `pre_llm_call`: Injects GenUI context + template list when platform is 'desktop'
+The full block reference lives in the system prompt as static text
+(prefix-cacheable). This plugin provides:
 - `transform_llm_output`: Intercepts agent responses containing ```genui blocks
 - Template tools: template_manage, template_list, template_view
+- Skills: genui:blocks, genui:patterns, genui:tracking (supplementary on-demand docs)
+
+NOTE: No dynamic content is injected into the system prompt or pre_llm_call.
+This preserves the KV cache prefix hash for optimal token caching.
 """
 
 from __future__ import annotations
 
-import json
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-
-def _on_pre_llm_call(**kwargs) -> dict | None:
-    """Pre-LLM hook: inject GenUI context and available templates for desktop."""
-    platform = kwargs.get("platform", "")
-    if platform.lower().strip() != "desktop":
-        return None
-
-    # Inject available template names as context so the agent knows what's reusable
-    try:
-        from .template_store import template_list
-        templates_json = template_list()
-        templates_data = json.loads(templates_json)
-        if templates_data.get("count", 0) > 0:
-            names = [t["name"] for t in templates_data["templates"]]
-            context = (
-                f"[GenUI templates available: {', '.join(names)}. "
-                f"Use template_view(name) to load one.]"
-            )
-            return {"inject_context": context}
-    except Exception:
-        logger.debug("Failed to inject template context", exc_info=True)
-
-    return None
+SKILLS_DIR = Path(__file__).parent / "skills"
 
 
 def _on_transform_llm_output(**kwargs) -> str | None:
@@ -58,8 +40,7 @@ def _on_transform_llm_output(**kwargs) -> str | None:
 
 
 def register(ctx) -> None:
-    """Register GenUI plugin hooks and template tools."""
-    ctx.register_hook("pre_llm_call", _on_pre_llm_call)
+    """Register GenUI plugin hooks, template tools, and block skills."""
     ctx.register_hook("transform_llm_output", _on_transform_llm_output)
 
     # Register template management tools
@@ -79,4 +60,22 @@ def register(ctx) -> None:
     except Exception:
         logger.warning("Failed to register template tools", exc_info=True)
 
-    logger.info("GenUI overlay plugin registered (v2 — composable blocks)")
+    # Register composable block skills (supplementary docs via skill_view)
+    try:
+        skills = {
+            "blocks": "GenUI block reference — expanded docs with JSON examples and prop tables",
+            "patterns": "GenUI composition patterns — wizards, forms, dashboards with copy-paste examples",
+            "tracking": "GenUI tracking model — binding rules, common mistakes, detailed examples",
+        }
+        for name, description in skills.items():
+            skill_path = SKILLS_DIR / name / "SKILL.md"
+            if skill_path.exists():
+                ctx.register_skill(name, skill_path, description=description)
+                logger.debug("Registered GenUI skill: genui:%s", name)
+            else:
+                logger.warning("GenUI skill file missing: %s", skill_path)
+        logger.info("GenUI skills registered (%d)", len(skills))
+    except Exception:
+        logger.warning("Failed to register GenUI skills", exc_info=True)
+
+    logger.info("GenUI overlay plugin registered (v2 — static prompt + on-demand skills)")

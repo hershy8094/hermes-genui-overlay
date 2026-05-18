@@ -223,6 +223,15 @@ if [ "$DO_APPLY" = true ]; then
     cd "$SCRIPT_DIR"
     bash apply.sh
     echo ""
+
+    # Enable the GenUI plugin (required for skill registration + auto-loading)
+    HERMES_VENV="$AGENT_DIR/venv/bin/python"
+    if [ -x "$HERMES_VENV" ]; then
+        "$HERMES_VENV" -m hermes_cli.main plugins enable genui 2>/dev/null && \
+            echo -e "${GREEN}✓${NC}  GenUI plugin enabled" || \
+            echo -e "${YELLOW}⚠${NC}  Could not auto-enable GenUI plugin (run: hermes plugins enable genui)"
+    fi
+    echo ""
 fi
 
 # ══════════════════════════════════════════════════════════════════
