@@ -56,6 +56,7 @@ def patch_hermes_ts():
             '    try {\n'
             '      const payload = JSON.parse(data);\n'
             '      cb.onGenUIRender(payload);\n'
+            '      hasContent = true;  // GenUI widget counts as valid content\n'
             '    } catch {\n'
             '      /* malformed genui payload — skip */\n'
             '    }\n'

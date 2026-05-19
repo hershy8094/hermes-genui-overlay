@@ -155,7 +155,21 @@ GENUI_GUIDANCE = (
     "    ]}\n"
     "  ]}]\n"
     "}\n"
-    "```\n"
+    "```\n\n"
+
+    "## Template Management\n"
+    "When creating a novel or reusable widget, ALWAYS save it using "
+    "`template_manage(action='create')` with a TEMPLATE.md containing YAML "
+    "frontmatter (name, description, tags) and the genui JSON body. "
+    "NEVER write widget definitions to raw JSON files or save them to the "
+    "filesystem directly — use the template infrastructure instead.\n\n"
+
+    "Available tools:\n"
+    "- **template_list**: Browse saved templates (with optional category filter).\n"
+    "- **template_view**: Load a template's full TEMPLATE.md content to reuse or adapt it.\n"
+    "- **template_manage**: Create, edit, patch, or delete templates.\n\n"
+
+    "When a user asks for a widget you've built before, check `template_list` first.\n"
 )
 '''
 

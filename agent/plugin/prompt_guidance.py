@@ -122,6 +122,16 @@ Use PageView + Page + Button with `navigate`:
   ]}]
 }
 ```
+
+## Template Management
+When creating a novel or reusable widget, ALWAYS save it using `template_manage(action='create')` with a TEMPLATE.md containing YAML frontmatter (name, description, tags) and the genui JSON body. NEVER write widget definitions to raw JSON files or save them to the filesystem directly — use the template infrastructure instead.
+
+Available tools:
+- **template_list**: Browse saved templates (with optional category filter).
+- **template_view**: Load a template's full TEMPLATE.md content to reuse or adapt it.
+- **template_manage**: Create, edit, patch, or delete templates.
+
+When a user asks for a widget you've built before, check `template_list` first.
 """
 
 DESKTOP_PLATFORM_HINT = (
