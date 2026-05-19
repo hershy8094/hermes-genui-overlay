@@ -1,0 +1,278 @@
+# ═══════════════════════════════════════════════════════════════════
+# release.yml — Build & release GenUI-enhanced Hermes Desktop
+# ═══════════════════════════════════════════════════════════════════
+#
+# Triggers on push to the `release` branch.
+# Builds for macOS (arm64 + x64), Windows, and Linux.
+# Creates a GitHub Release with all artifacts.
+#
+# Required secrets:
+#   (none for unsigned builds — add APPLE_*, CSC_* for code signing)
+#
+# ═══════════════════════════════════════════════════════════════════
+
+name: Release
+
+on:
+  push:
+    branches:
+      - release
+
+# Only one release build at a time
+concurrency:
+  group: release-${{ github.sha }}
+  cancel-in-progress: true
+
+env:
+  AGENT_REPO: https://github.com/NousResearch/hermes-agent
+  DESKTOP_REPO: https://github.com/fathah/hermes-desktop
+  NODE_VERSION: "22"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ── Extract version for the release tag ──────────────────────────
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone hermes-desktop (version source)
+        run: git clone --depth 1 "$DESKTOP_REPO" hermes-desktop
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./hermes-desktop/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 Version: $VERSION"
+
+  # ── macOS builds (arm64 + x64) ──────────────────────────────────
+  build-macos:
+    needs: prepare
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+        include:
+          - arch: arm64
+            runner: macos-14     # Apple Silicon
+          - arch: x64
+            runner: macos-13     # Intel
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Clone dependency repos
+        run: |
+          git clone --depth 1 "$AGENT_REPO" hermes-agent
+          git clone --depth 1 "$DESKTOP_REPO" hermes-desktop
+
+      - name: Apply overlay patches
+        run: bash apply.sh
+
+      - name: Install npm dependencies
+        working-directory: hermes-desktop
+        run: npm ci
+
+      - name: Clean dist
+        working-directory: hermes-desktop
+        run: rm -rf dist
+
+      - name: Build (compile + package)
+        working-directory: hermes-desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npx electron-vite build
+          npx electron-builder --mac --${{ matrix.arch }} --config.mac.notarize=false --publish=never
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: |
+            hermes-desktop/dist/*.dmg
+            hermes-desktop/dist/*.zip
+          if-no-files-found: error
+
+  # ── Windows build ────────────────────────────────────────────────
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Clone dependency repos
+        shell: bash
+        run: |
+          git clone --depth 1 "$AGENT_REPO" hermes-agent
+          git clone --depth 1 "$DESKTOP_REPO" hermes-desktop
+
+      - name: Apply overlay patches
+        shell: bash
+        run: bash apply.sh
+
+      - name: Install npm dependencies
+        working-directory: hermes-desktop
+        run: npm ci
+
+      - name: Clean dist
+        working-directory: hermes-desktop
+        shell: bash
+        run: rm -rf dist
+
+      - name: Build (compile + package)
+        working-directory: hermes-desktop
+        run: |
+          npx electron-vite build
+          npx electron-builder --win --publish=never
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            hermes-desktop/dist/*.exe
+          if-no-files-found: error
+
+  # ── Linux build ──────────────────────────────────────────────────
+  build-linux:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Clone dependency repos
+        run: |
+          git clone --depth 1 "$AGENT_REPO" hermes-agent
+          git clone --depth 1 "$DESKTOP_REPO" hermes-desktop
+
+      - name: Apply overlay patches
+        run: bash apply.sh
+
+      - name: Install npm dependencies
+        working-directory: hermes-desktop
+        run: npm ci
+
+      - name: Clean dist
+        working-directory: hermes-desktop
+        run: rm -rf dist
+
+      - name: Build (compile + package)
+        working-directory: hermes-desktop
+        run: |
+          npx electron-vite build
+          npx electron-builder --linux --publish=never
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            hermes-desktop/dist/*.AppImage
+            hermes-desktop/dist/*.deb
+            hermes-desktop/dist/*.rpm
+            hermes-desktop/dist/*.snap
+          if-no-files-found: error
+
+  # ── Create GitHub Release ────────────────────────────────────────
+  release:
+    needs: [prepare, build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List release files
+        run: find artifacts -type f | sort
+
+      - name: Collect release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f \( \
+            -name "*.dmg" -o \
+            -name "*.zip" -o \
+            -name "*.exe" -o \
+            -name "*.AppImage" -o \
+            -name "*.deb" -o \
+            -name "*.rpm" -o \
+            -name "*.snap" \
+          \) -exec cp {} release-assets/ \;
+          echo "📦 Release assets:"
+          ls -lh release-assets/
+
+      - name: Delete existing release (if re-pushing)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${{ needs.prepare.outputs.tag }}" --yes --cleanup-tag 2>/dev/null || true
+
+      - name: Generate release notes
+        run: |
+          cat > release-notes.md << 'NOTES'
+          ## Hermes Desktop with GenUI Overlay
+
+          ### Downloads
+
+          | Platform | File |
+          |----------|------|
+          | 🍎 macOS (Apple Silicon) | `.dmg` (arm64) |
+          | 🍎 macOS (Intel) | `.dmg` (x64) |
+          | 🪟 Windows | `.exe` installer |
+          | 🐧 Linux | `.AppImage`, `.deb`, `.rpm` |
+
+          ### What's included
+          - Hermes Agent with GenUI overlay
+          - 25 interactive widget blocks
+          - Agent-driven generative UI rendering
+          - State tracking & multi-page wizards
+
+          > **Note:** macOS builds are unsigned. Right-click → Open to bypass Gatekeeper on first launch.
+          NOTES
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ needs.prepare.outputs.tag }}" \
+            --title "Hermes Desktop (GenUI) ${{ needs.prepare.outputs.tag }}" \
+            --notes-file release-notes.md \
+            --latest \
+            release-assets/*

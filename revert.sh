@@ -48,6 +48,9 @@ rm -f src/renderer/src/assets/genui.css && echo "✓ Removed genui.css" || true
 rm -f src/renderer/src/assets/genui-blocks.css && echo "✓ Removed genui-blocks.css" || true
 git checkout -- package-lock.json 2>/dev/null && echo "✓ Restored package-lock.json" || echo "⏭ package-lock.json (clean)"
 
+# Clean build artifacts
+rm -rf dist && echo "✓ Cleaned dist/" || true
+
 # ── 3. Remove plugin symlink ──
 
 echo ""
