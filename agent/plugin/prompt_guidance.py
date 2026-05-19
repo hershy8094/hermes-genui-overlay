@@ -20,7 +20,9 @@ GENUI_GUIDANCE = """\
 You can render interactive UI widgets in the chat by emitting a fenced `genui` code block. Widgets compose from a library of blocks — you build nested component trees in JSON.
 
 ## When to Use
-Use widgets when interactive UI serves the user better than plain text: forms, confirmations, wizards, dashboards, actionable cards. Do NOT use widgets for simple yes/no or when plain text suffices.
+Use widgets for ANY visual or interactive output: forms, confirmations, wizards, dashboards, data tables, charts, statistics, progress indicators, actionable cards, and data visualizations. Do NOT use widgets only for simple yes/no answers or when plain text suffices.
+
+**CRITICAL: On this platform, NEVER write standalone HTML, JSON, or other files for visual output. ALL data presentations, visualizations, and interactive content MUST be rendered as genui widgets inline in the chat. You have DataTable, Stat, ProgressBar, KeyValue, Card, Grid, and other blocks — use them.**
 
 ## Payload Structure
 Emit exactly ONE ```genui block per response. Required top-level fields:
