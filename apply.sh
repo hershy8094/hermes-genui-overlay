@@ -8,6 +8,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 AGENT_DIR="$SCRIPT_DIR/hermes-agent"
 DESKTOP_DIR="$SCRIPT_DIR/hermes-desktop"
 
+# Cross-platform sed -i (macOS vs GNU)
+sed_i() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 # ── Validation ──
 
 if [ ! -d "$AGENT_DIR" ]; then
@@ -32,14 +41,15 @@ echo ""
 PLUGIN_DIR="$HOME/.hermes/plugins"
 PLUGIN_TARGET="$PLUGIN_DIR/genui"
 
-mkdir -p "$PLUGIN_DIR"
+mkdir -p "$PLUGIN_DIR" 2>/dev/null || true
 if [ -L "$PLUGIN_TARGET" ]; then
     echo "✓ Plugin symlink already exists"
 elif [ -d "$PLUGIN_TARGET" ]; then
     echo "⚠ Plugin directory exists (not a symlink) — skipping"
 else
-    ln -sf "$SCRIPT_DIR/agent/plugin" "$PLUGIN_TARGET"
-    echo "✓ Plugin symlinked: $PLUGIN_TARGET → agent/plugin/"
+    ln -sf "$SCRIPT_DIR/agent/plugin" "$PLUGIN_TARGET" 2>/dev/null && \
+        echo "✓ Plugin symlinked: $PLUGIN_TARGET → agent/plugin/" || \
+        echo "⏭ Plugin symlink skipped (CI environment)"
 fi
 
 # ── 2. Copy standalone frontend files ──
@@ -61,8 +71,9 @@ if [ -d "$SCRIPT_DIR/desktop/components/genui" ]; then
        "$DESKTOP_DIR/src/renderer/src/components/genui/" 2>/dev/null && \
        echo "✓ Copied genui/ components" || echo "⏭ genui/ (already up to date)"
     # Rewrite imports: overlay uses ../genui-types, desktop build needs ../../../../shared/genui-types
-    find "$DESKTOP_DIR/src/renderer/src/components/genui" \( -name "*.ts" -o -name "*.tsx" \) \
-        -exec sed -i '' 's|from "../genui-types"|from "../../../../shared/genui-types"|g' {} +
+    while IFS= read -r -d '' tsfile; do
+        sed_i 's|from "../genui-types"|from "../../../../shared/genui-types"|g' "$tsfile"
+    done < <(find "$DESKTOP_DIR/src/renderer/src/components/genui" \( -name "*.ts" -o -name "*.tsx" \) -print0)
     echo "✓ Rewrote genui-types import paths for desktop build"
 else
     echo "⏭ genui/ components (source missing — will be created during implementation)"
@@ -75,7 +86,7 @@ if [ -f "$SCRIPT_DIR/desktop/styles/genui.css" ]; then
        "$DESKTOP_DIR/src/renderer/src/assets/genui.css" 2>/dev/null && \
        echo "✓ Copied genui.css" || echo "⏭ genui.css (already up to date)"
     if [ -f "$MAIN_CSS" ] && ! grep -q "genui.css" "$MAIN_CSS"; then
-        sed -i '' '1s/^/@import ".\/genui.css";  \/* [GENUI-OVERLAY] *\/\'$'\n/' "$MAIN_CSS"
+        sed_i '1s/^/@import ".\/genui.css";  \/* [GENUI-OVERLAY] *\/\n/' "$MAIN_CSS"
         echo "✓ Injected genui.css import into main.css"
     fi
 else
@@ -86,7 +97,7 @@ if [ -f "$SCRIPT_DIR/desktop/styles/genui-blocks.css" ]; then
        "$DESKTOP_DIR/src/renderer/src/assets/genui-blocks.css" 2>/dev/null && \
        echo "✓ Copied genui-blocks.css" || echo "⏭ genui-blocks.css (already up to date)"
     if [ -f "$MAIN_CSS" ] && ! grep -q "genui-blocks.css" "$MAIN_CSS"; then
-        sed -i '' '1s/^/@import ".\/genui-blocks.css";  \/* [GENUI-OVERLAY-v2] *\/\'$'\n/' "$MAIN_CSS"
+        sed_i '1s/^/@import ".\/genui-blocks.css";  \/* [GENUI-OVERLAY-v2] *\/\n/' "$MAIN_CSS"
         echo "✓ Injected genui-blocks.css import into main.css"
     fi
 else

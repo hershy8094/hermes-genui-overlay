@@ -37,7 +37,7 @@ git checkout -- src/preload/index.ts 2>/dev/null && echo "✓ preload/index.ts" 
 git checkout -- src/preload/index.d.ts 2>/dev/null && echo "✓ preload/index.d.ts" || echo "⏭ preload/index.d.ts (clean)"
 git checkout -- src/renderer/src/screens/Chat/Chat.tsx 2>/dev/null && echo "✓ Chat.tsx" || echo "⏭ Chat.tsx (clean)"
 git checkout -- src/renderer/src/assets/main.css 2>/dev/null && echo "✓ main.css" || echo "⏭ main.css (clean)"
-git checkout -- src/main/installer.ts 2>/dev/null && echo "✓ installer.ts" || echo "⏭ installer.ts (clean)"
+
 
 # Remove standalone files (not tracked by upstream)
 echo ""
